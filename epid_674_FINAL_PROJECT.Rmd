@@ -1,0 +1,70 @@
+---
+title: "EPID 674 - Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE)
+```
+
+__FINAL PROJECT TASKS__
+
+* For our final project, we will again evaluate an OTU table from a study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal), which is described here: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-016-0151-8
+
+* There are five tasks to complete for the final project:
+
+1. Calculate Shannon diversity for all specimens included in the ICU study and plot the Shannon diversity as a function of days from enrollment, with separate colors for "OP" and "ET" specimens.
+
+2. Develop a linear model for the Shannon diversity in the "ET" specimens as it relates to the Shannon diversity in the "OP" specimens (hint - remember "gather" and "spread").
+
+3. Choose a single subject with multiple timepoints sampled, and define the most abundant OTU at each timepoint. What are the taxonomic assignments of these OTUs? Does the most abundant OTU change, or does it stay the same?
+
+4. Convert your tidy data into an OTU matrix and evaluate beta diversity by PCoA, plotting the PCoA with separate colors for "OP" and "ET" specimens.
+
+5. Convert your tidy data into an OTU matrix and evaluate DMM models for the combined set of specimens, plotting the abundance of the 10 most abundant taxa across the DMM mixture/community types (heatmap or boxplot).
+
+***
+
+__Getting Started: Load the Necesary Packages__
+
+* We have to explicitly load the packages that we will use for our analysis.
+
+```{r load_tidyverse, echo=TRUE, eval=TRUE}
+
+library(tidyverse)
+library(vegan)
+library(ape)
+library(DirichletMultinomial)
+library(viridis)
+
+```
+
+***
+
+__Getting Started: Load & Tidy the Data__
+
+* Here is the OTU table from our study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal):
+
+```{r load_otus, echo=TRUE, eval=TRUE, fig.align='center'}
+
+icu_otus <- read_tsv(file = "./data/icu_de_novo_otu_table_op_et.txt") # we skip the first line because it holds a file descriptor, not tabular data
+
+icu_assignments <- read_tsv(file = "./data/icu_de_novo_assignment_ltp_genus.txt")
+
+icu_otus %>%
+  dplyr::rename(otu_id = '#OTU ID') %>%
+  gather(key = "specimen_id", value = "read_count", -otu_id) %>%
+  left_join(icu_assignments, by = "otu_id") %>%
+  mutate(subject_id = str_extract(string = specimen_id, pattern = "001|002|003|004|005|006|007|008|009|010|011|012|013|014|015"),
+         specimen_type = str_extract(string = specimen_id, pattern = "ET|OP"),
+         collection_date = as.Date(str_sub(string = specimen_id, start = 12, end = 19), format = "%Y%m%d")) %>%
+  group_by(subject_id) %>%
+  mutate(days_since_enrollment = as.numeric(collection_date - min(collection_date))) %>%
+  ungroup() -> tidy_icu_final
+
+tidy_icu_final %>%
+  dplyr::slice(1:11)
+
+```
+
+***

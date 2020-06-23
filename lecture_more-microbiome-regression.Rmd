@@ -1,0 +1,478 @@
+---
+title: "Regression for Microbiome Data:</br>Multinomial Mixture Models"
+subtitle: "📚EPID 674📚"  
+author: "Brendan J. Kelly, MD, MS"
+date: 'Updated: `r format(Sys.Date(), "%d %B %Y")`'
+output:
+  xaringan::moon_reader:
+    self_contained: TRUE
+    lib_dir: libs
+    css: xaringan-themer-plus.css
+    nature:
+      ratio: 16:9
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+background-image: url(svg/mixture.svg)
+background-size: 500px
+background-position: 85% 50%
+class: middle, inverse
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE, eval=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#011F5B",
+  secondary_color = "#990000",
+  inverse_header_color = "#FFFFFF",
+  header_font_google = google_font("Roboto Condensed"),
+  text_font_google = google_font("Roboto"),
+  code_font_google = google_font("Roboto Mono"),
+  # padding = "64px 64px 64px 64px"
+  # base_font_size = "24px",
+  # text_font_base = "1rem",
+  # header_h1_font_size = "2.75rem",
+  # header_h2_font_size = "2rem",
+  # header_h3_font_size = "1.25rem",
+)
+```
+
+.pad-left[
+
+### Dirichlet Multinomial Mixtures
+
+### Implementating DMM in R
+
+### ICU Community Types
+
+### DMM & Regression
+
+]
+
+
+
+---
+background-image: url(svg/mixture.svg)
+background-size: 500px
+background-position: 85% 50%
+class: center, middle, inverse
+
+# Dirichlet Multinomial Mixtures
+
+
+---
+
+# High Dimensional Microbiome Data
+
+.center[
+
+```{r otu_table, echo=FALSE, eval=TRUE, warning=FALSE, message=FALSE}
+
+library(tidyverse)
+
+# TYPICAL OTU TABLE ORIENTATION IN MICROBIOME STUDIES
+
+otu <- read_csv("./data/HMP_OTU_table_long.csv.gz")
+
+otu %>%
+  reshape2::acast(otu_id ~ specimen_id,
+                  # rows = otu_id, columns = specimen_id
+                  value.var = "read_count") %>%
+     .[1:16,1:6]
+
+# 43140 ROWS & 32 COLUMNS
+
+
+```
+
+]
+
+
+
+---
+
+# High Dimensional Microbiome Data
+
+.pad-left[
+
+- How to deal with high-dimensional microbiome data?
+
+- Descriptive (e.g., heatmaps and stacked barplots)
+    
+- Test a priori hypotheses regarding specific OTUs/taxa
+
+- __Reduce dimensions__:
+
+    - single summary statistic (alpha diversity)
+    
+    - pairwise distances (beta diversity) with PCoA or PERMANOVA
+    
+    - __community types (mixture modeling)__
+
+
+]
+
+
+
+---
+background-image: url(img/hmp_heatmap.png)
+background-size: contain
+
+
+
+---
+background-image: url(img/holmes_heat_dmm_nmds.png)
+background-size: contain
+
+
+
+---
+
+# Dirichlet-Multinomial Mixtures
+
+.pad-left[
+
+- Dirichlet-multinomial distribution:  
+
+    - compound probability distribution  
+    - probability vector drawn from Dirichlet distribution (generalized beta)  
+    - observation drawn from multinomial distribution (generalized binomial)  
+    
+- D-M mixture modelling:  
+
+    - each sample ~ multinomial from one Dirichlet vector
+    - vector number: minimize -log(model evidence, Laplace approx)
+    - Dirichlet probability vectors = “community types”
+
+]
+
+
+
+---
+background-image: url(img/dmm_nares_example_number.png)
+background-size: contain
+
+
+
+---
+background-image: url(img/dmm_nares_example_heat.png)
+background-size: contain
+
+
+
+---
+background-image: url(img/ding_stool_dmm.png)
+background-size: 800px
+background-position: 50% 50%
+
+
+.footnote[Ding & Schloss _Nature_ 2014]
+
+
+---
+background-image: url(img/ding_dmm_associations.png)
+background-size: 600px
+background-position: 55% 50%
+
+
+.footnote[Ding & Schloss _Nature_ 2014]
+
+
+
+---
+background-image: url(svg/mixture.svg)
+background-size: 500px
+background-position: 85% 50%
+class: center, middle, inverse
+
+# Implementating DMM in R
+
+
+
+---
+
+# Preparation for DMM
+
+.pull-left[
+
+```{r lib1, echo=TRUE, eval=FALSE, warning=FALSE, message=FALSE}
+
+# install tidyverse ...
+# install.packages("tidyverse") 
+library(tidyverse) #<<
+
+# new package for heatmap color schemes...
+# install.packages("viridis")
+library(viridis) #<<
+
+# install package from Bioconductor...
+# install.packages("BiocManager")
+# BiocManager::install("DirichletMultinomial")
+library(DirichletMultinomial) #<<
+
+set.seed(16) # for consistent DMM results #<<
+
+icu_matrix_et <- read_rds(
+  path = "./data/icu_ET_specimen_otu_table.rds"
+  )
+
+icu_matrix_et[1:16,1:2]
+
+
+
+```
+
+
+]
+
+.pull-right[
+
+```{r lib1-out, ref.label="lib1", echo=FALSE, message=FALSE, warning=FALSE}
+
+```
+
+
+]
+
+
+---
+
+# `DirichletMultinomial`
+
+.pull-left[
+
+```{r dmm1, echo=TRUE, eval=FALSE, warning=FALSE, message=FALSE}
+
+#filter to speed DMM model fitting
+icu_matrix_et[rowSums(icu_matrix_et) > 500,] ->
+  small_icu_matrix_et
+
+dmm <- lapply(1:10, #<<
+              dmn, #<<
+              count = t(small_icu_matrix_et), #<<
+              verbose = FALSE) #<<
+
+lplc <- sapply(dmm, laplace) #<<
+
+qplot(x = seq_along(lplc),
+      y = lplc,
+      geom = c("point","line")) +
+  theme_bw() +
+  labs(x = "Dirichlet Components",
+       y = "LPLC")
+
+
+
+```
+
+
+]
+
+.pull-right[
+
+```{r dmm1-out, ref.label="dmm1", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5}
+
+```
+
+
+]
+
+
+---
+background-image: url(svg/mixture.svg)
+background-size: 500px
+background-position: 85% 50%
+class: center, middle, inverse
+
+# ICU Community Types
+
+
+
+---
+
+# DMM Assignments
+
+.pull-left[
+
+```{r dmm2, echo=TRUE, eval=FALSE, warning=FALSE, message=FALSE}
+
+best_dmm <- dmm[[which.min(lplc)]] #<<
+
+mixture(best_dmm) %>% #<<
+  as_tibble(rownames = "specimen") %>%
+  rename_at(.vars = vars(contains("V")),
+            .funs = function(x)
+              paste0(
+                gsub("V","m",x),"_prob")
+            ) %>%
+  mutate(assignment = #<<
+           mixture(best_dmm, #<<
+                   assign = TRUE)) -> #<<
+  icu_et_dmm_assignments
+
+icu_et_dmm_assignments
+
+
+
+```
+
+
+]
+
+.pull-right[
+
+```{r dmm2-out, ref.label="dmm2", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5}
+
+```
+
+
+]
+
+
+---
+
+# DMM Mixture Fits
+
+.pull-left[
+
+```{r dmm3, echo=TRUE, eval=FALSE, warning=FALSE, message=FALSE}
+
+fitted(best_dmm, scale=TRUE) %>% #<<
+# scale indicates whether fits scaled by the...
+# ... variability of mixturewt parameter theta
+  as_tibble(rownames = "otu_id") %>%
+  rename_at(.vars = vars(contains("V")),
+            .funs = function(x) 
+              paste0(gsub("V","m",x),"_fit")) ->
+  icu_et_dmm_otu_fits
+
+icu_et_dmm_otu_fits %>%
+  gather(key = which_mix, value = mix_fit, -otu_id) %>%
+  ggplot(data = .) +
+  geom_tile(mapping = aes(x = which_mix,
+                          y = otu_id,
+                          fill = mix_fit)) +
+  scale_fill_viridis()
+
+
+
+```
+
+
+]
+
+.pull-right[
+
+```{r dmm3-out, ref.label="dmm3", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5}
+
+```
+
+
+]
+
+
+---
+
+# Difference From Single-Mixture
+
+.pull-left[
+
+```{r dmm4, echo=TRUE, eval=FALSE, warning=FALSE, message=FALSE}
+
+abs(fitted(best_dmm, scale=TRUE) - #<<
+      as.vector(fitted(dmm[[1]], #<<
+                       scale=TRUE))) %>% #<<
+# scale indicates whether fits scaled by the...
+# ... variability of mixturewt parameter theta
+  as_tibble(rownames = "otu_id") %>%
+  rename_at(.vars = vars(contains("V")),
+            .funs = function(x)
+              paste0(gsub("V","m",x),"_diff_single")) ->
+  icu_et_dmm_otu_diff_single
+
+icu_et_dmm_otu_diff_single %>%
+  gather(key = which_mix,
+         value = diff,
+         -otu_id) %>%
+  ggplot(data = .) +
+  geom_tile(mapping = aes(x = which_mix,
+                          y = otu_id,
+                          fill = diff)) +
+  scale_fill_viridis()
+
+
+
+```
+
+
+]
+
+.pull-right[
+
+```{r dmm4-out, ref.label="dmm4", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5}
+
+```
+
+
+]
+
+
+---
+background-image: url(svg/mixture.svg)
+background-size: 500px
+background-position: 85% 50%
+class: center, middle, inverse
+
+#  DMM & Regression
+
+
+
+---
+
+# DMM & Regression?
+
+.pad-left[
+
+- DMM community types as exposure variable:  
+
+    - easy ⇾ `lm()` or `glm()`  
+    
+    - (like α-diversity or β-diversity PC1)  
+
+- DMM community types as outcome variables:  
+
+    - e.g., categorical logistic regression  
+
+- Biological validity of DMM community types? Reproducibility?  
+
+]
+
+
+
+---
+class: center, middle, inverse
+background-image: url(svg/conjugation.svg)
+background-size: 500px
+background-position: 85% 50%
+
+# Questions?
+### Post to the discussion board!
+
+
+---
+background-image: url(svg/bacteria.svg)
+background-size: 100px
+background-position: 98% 90%
+class: center, middle
+
+# Thank you!
+#### Slides available: [github.com/bjklab](https://github.com/bjklab/https://github.com/bjklab/EPID674_008_microbiome-regression.git)
+#### [brendank@pennmedicine.upenn.edu](brendank@pennmedicine.upenn.edu)
+
+
+
+

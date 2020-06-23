@@ -399,13 +399,13 @@ summary {
 <ul>
 <li>A. Use the <code>vegdist</code> function to calculate Jaccard distances between specimens</li>
 <li>B. Use the <code>adonis</code> function to assess the effect of ET/OP (data set #1) or Cecal/Stool (data set #2)</li>
-<li>HINT: use the matrix form of the data… and don’t forget to transpose… then use the distance matrix as the dependent variable of the PERMANOVA model</li>
+<li>HINT: use the matrix form of the data… and don’t forget to transpose!</li>
 </ul></li>
 <li>Dirichlet Multinomial Mixture model:
 <ul>
 <li>A. Apply a DMM model to your chosen data set – how many community types are recognized</li>
 <li>B. Use the “fitted” function to assign categorical mixture type to each specimen</li>
-<li>HINT: use the matrix form of the data… and don’t forget to transpose!</li>
+<li>HINT: use the matrix form of the data… and don’t forget to transpose… then use the distance matrix as the dependent variable of the PERMANOVA model</li>
 </ul></li>
 </ol>
 <hr />
@@ -414,6 +414,11 @@ summary {
 <li>We have to explicitly load the packages that we will use for our analysis.</li>
 </ul>
 <pre class="r"><code># remember to install packages the first time!
+#&#39; install.packages(&quot;tidyverse&quot;)
+#&#39; install.packages(&quot;vegan&quot;)
+#&#39; intall.packages(&quot;BiocManager&quot;)
+#&#39; BiocManager::install(&quot;DirichletMultinomial&quot;)
+
 library(tidyverse)
 library(vegan)
 library(DirichletMultinomial)

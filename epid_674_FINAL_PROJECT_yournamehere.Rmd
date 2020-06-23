@@ -28,12 +28,12 @@ __EPID674: FINAL PROJECT__
 3. Beta diversity:
     - A. Use the `vegdist` function to calculate Jaccard distances between specimens
     - B. Use the `adonis` function to assess the effect of ET/OP (data set #1) or Cecal/Stool (data set #2)
-    - HINT: use the matrix form of the data... and don't forget to transpose... then use the distance matrix as the dependent variable of the PERMANOVA model
+    - HINT: use the matrix form of the data... and don't forget to transpose!
 
 4. Dirichlet Multinomial Mixture model:
     - A. Apply a DMM model to your chosen data set -- how many community types are recognized
     - B. Use the "fitted" function to assign categorical mixture type to each specimen
-    - HINT: use the matrix form of the data... and don't forget to transpose!
+    - HINT: use the matrix form of the data... and don't forget to transpose... then use the distance matrix as the dependent variable of the PERMANOVA model
 
 
 
@@ -46,6 +46,11 @@ __Getting Started: Load the Necesary Packages__
 ```{r load_pkgs, echo=TRUE, eval=TRUE}
 
 # remember to install packages the first time!
+#' install.packages("tidyverse")
+#' install.packages("vegan")
+#' intall.packages("BiocManager")
+#' BiocManager::install("DirichletMultinomial")
+
 library(tidyverse)
 library(vegan)
 library(DirichletMultinomial)

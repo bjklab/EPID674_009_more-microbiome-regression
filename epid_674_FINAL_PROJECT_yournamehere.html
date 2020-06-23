@@ -392,14 +392,14 @@ summary {
 <ul>
 <li>for data set #1: Shannon diversity ~ ET/OP<br />
 </li>
-<li>for data set #2: Shannon diversity ~ vendor</li>
+<li>for data set #2: Shannon diversity ~ vendor, or Shannon diversity ~ specimen_type</li>
 <li>HINT: use the output from above</li>
 </ul></li>
 <li>Beta diversity:
 <ul>
 <li>A. Use the <code>vegdist</code> function to calculate Jaccard distances between specimens</li>
-<li>B. Use the <code>adonis</code> function to assess the effect of ET/OP (data set #1) or vendor (data set #2)</li>
-<li>HINT: use the matrix form of the data… and don’t forget to transpose!</li>
+<li>B. Use the <code>adonis</code> function to assess the effect of ET/OP (data set #1) or Cecal/Stool (data set #2)</li>
+<li>HINT: use the matrix form of the data… and don’t forget to transpose… then use the distance matrix as the dependent variable of the PERMANOVA model</li>
 </ul></li>
 <li>Dirichlet Multinomial Mixture model:
 <ul>
@@ -416,15 +416,18 @@ summary {
 <pre class="r"><code># remember to install packages the first time!
 library(tidyverse)
 library(vegan)
-library(ape)
 library(DirichletMultinomial)
-library(viridis)
 set.seed(16)</code></pre>
 <hr />
 <p><strong>Getting Started: Load the Data</strong></p>
 <ul>
 <li>Load Data:</li>
 </ul>
+<pre class="r"><code>icu_long &lt;- read_csv(file = &quot;./final_project_data/icu_small_long.csv.gz&quot;)
+icu_mat &lt;- read_rds(path = &quot;./final_project_data/icu_small_mat.rds&quot;)
+
+mouse_long &lt;- read_csv(file = &quot;./final_project_data/mouse_small_long.csv.gz&quot;)
+mouse_mat &lt;- read_rds(path = &quot;./final_project_data/mouse_small_mat.rds&quot;)</code></pre>
 <hr />
 <p><strong>Task #1</strong></p>
 <ul>

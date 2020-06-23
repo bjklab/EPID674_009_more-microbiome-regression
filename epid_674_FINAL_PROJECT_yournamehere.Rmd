@@ -22,13 +22,13 @@ __EPID674: FINAL PROJECT__
 
 2. Develop a linear model for the Shannon diversity:  
     - for data set #1: Shannon diversity ~ ET/OP  
-    - for data set #2: Shannon diversity ~ vendor 
+    - for data set #2: Shannon diversity ~ vendor, or Shannon diversity ~ specimen_type
     - HINT: use the output from above
 
 3. Beta diversity:
     - A. Use the `vegdist` function to calculate Jaccard distances between specimens
-    - B. Use the `adonis` function to assess the effect of ET/OP (data set #1) or vendor (data set #2)
-    - HINT: use the matrix form of the data... and don't forget to transpose!
+    - B. Use the `adonis` function to assess the effect of ET/OP (data set #1) or Cecal/Stool (data set #2)
+    - HINT: use the matrix form of the data... and don't forget to transpose... then use the distance matrix as the dependent variable of the PERMANOVA model
 
 4. Dirichlet Multinomial Mixture model:
     - A. Apply a DMM model to your chosen data set -- how many community types are recognized
@@ -48,9 +48,7 @@ __Getting Started: Load the Necesary Packages__
 # remember to install packages the first time!
 library(tidyverse)
 library(vegan)
-library(ape)
 library(DirichletMultinomial)
-library(viridis)
 set.seed(16)
 
 
@@ -64,6 +62,11 @@ __Getting Started: Load the Data__
 
 ```{r load_otus, echo=TRUE, eval=TRUE, fig.align='center'}
 
+icu_long <- read_csv(file = "./final_project_data/icu_small_long.csv.gz")
+icu_mat <- read_rds(path = "./final_project_data/icu_small_mat.rds")
+
+mouse_long <- read_csv(file = "./final_project_data/mouse_small_long.csv.gz")
+mouse_mat <- read_rds(path = "./final_project_data/mouse_small_mat.rds")
 
 
 

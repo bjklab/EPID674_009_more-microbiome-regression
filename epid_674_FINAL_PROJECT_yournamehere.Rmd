@@ -1,5 +1,4 @@
 ---
-title: "EPID 674 - Final Project"
 output: html_document
 ---
 
@@ -7,24 +6,36 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE)
 ```
 
-__FINAL PROJECT TASKS__
+__EPID674: FINAL PROJECT__
 
 * For your final project, you will choose from two data sets to study:
 
-- (1) an OTU table from a study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal), which is described here: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-016-0151-8
-- (2) an OTU table from a study of mouse 
+    - (1) an OTU table from a study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal), which is described here: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-016-0151-8   
+    - (2) an OTU table from a study of mouse  
 
-* There are five tasks to complete for the final project:
+* There are four tasks to complete for the final project:  
 
-1. Calculate Shannon diversity for all specimens included in your study of choice, and plot the Shannon diversity with separate colors for specimen type ("OP" vs "ET" specimens for data set #1; or vendor name for data set #2).
+1. Alpha diversity:  
+    - A. Calculate Shannon diversity for all specimens included in your study of choice  
+    - B. Plot the Shannon diversity with separate colors for specimen type ("OP" vs "ET" specimens for data set #1; or vendor name for data set #2).  
+    - HINT: use the long form of the data and group by specimen  
 
-2. Develop a linear model for the Shannon diversity in the "ET" specimens as it relates to the Shannon diversity in the "OP" specimens (hint - remember "gather" and "spread").
+2. Develop a linear model for the Shannon diversity:  
+    - for data set #1: Shannon diversity ~ ET/OP  
+    - for data set #2: Shannon diversity ~ vendor 
+    - HINT: use the output from above
 
-3. Choose a single subject with multiple timepoints sampled, and define the most abundant OTU at each timepoint. What are the taxonomic assignments of these OTUs? Does the most abundant OTU change, or does it stay the same?
+3. Beta diversity:
+    - A. Use the `vegdist` function to calculate Jaccard distances between specimens
+    - B. Use the `adonis` function to assess the effect of ET/OP (data set #1) or vendor (data set #2)
+    - HINT: use the matrix form of the data... and don't forget to transpose!
 
-4. Convert your tidy data into an OTU matrix and evaluate beta diversity by PCoA, plotting the PCoA with separate colors for "OP" and "ET" specimens.
+4. Dirichlet Multinomial Mixture model:
+    - A. Apply a DMM model to your chosen data set -- how many community types are recognized
+    - B. Use the "fitted" function to assign categorical mixture type to each specimen
+    - HINT: use the matrix form of the data... and don't forget to transpose!
 
-5. Convert your tidy data into an OTU matrix and evaluate DMM models for the combined set of specimens, plotting the abundance of the 10 most abundant taxa across the DMM mixture/community types (heatmap or boxplot).
+
 
 ***
 
@@ -32,13 +43,16 @@ __Getting Started: Load the Necesary Packages__
 
 * We have to explicitly load the packages that we will use for our analysis.
 
-```{r load_tidyverse, echo=TRUE, eval=TRUE}
+```{r load_pkgs, echo=TRUE, eval=TRUE}
 
+# remember to install packages the first time!
 library(tidyverse)
 library(vegan)
 library(ape)
 library(DirichletMultinomial)
 library(viridis)
+set.seed(16)
+
 
 ```
 
@@ -46,7 +60,7 @@ library(viridis)
 
 __Getting Started: Load the Data__
 
-* Here is the OTU table from our study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal):
+* Load Data:
 
 ```{r load_otus, echo=TRUE, eval=TRUE, fig.align='center'}
 
@@ -58,8 +72,59 @@ __Getting Started: Load the Data__
 
 ***
 
+__Task #1__
+
+* Alpha diversity:
+
+```{r task1, echo=TRUE, eval=TRUE, fig.align='center'}
 
 
 
 
+
+```
+
+***
+
+__Task #2__
+
+* Linear model:
+
+```{r task2, echo=TRUE, eval=TRUE, fig.align='center'}
+
+
+
+
+
+```
+
+***
+
+__Task #3__
+
+* Beta diversity:
+
+```{r task3, echo=TRUE, eval=TRUE, fig.align='center'}
+
+
+
+
+
+```
+
+***
+
+__Task #4__
+
+* DMM model:
+
+```{r task4, echo=TRUE, eval=TRUE, fig.align='center'}
+
+
+
+
+
+```
+
+***
 

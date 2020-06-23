@@ -11,7 +11,7 @@ __EPID674: FINAL PROJECT__
 * For your final project, you will choose from two data sets to study:
 
     - (1) an OTU table from a study of respiratory tract microbiome (OP = oropharyngeal, ET = endotracheal), which is described here: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-016-0151-8   
-    - (2) an OTU table from a study of mouse  
+    - (2) an OTU table from a study of mouse cecal and stool from different mouse vendors 
 
 * There are four tasks to complete for the final project:  
 

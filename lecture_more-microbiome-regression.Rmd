@@ -2,7 +2,7 @@
 title: "Regression for Microbiome Data:</br>Multinomial Mixture Models"
 subtitle: "📚EPID 674📚"  
 author: "Brendan J. Kelly, MD, MS"
-date: 'Updated: `r format(Sys.Date(), "%d %B %Y")`'
+date: 'Updated: 23 June 2020' #`r format(Sys.Date(), "%d %B %Y")`
 output:
   xaringan::moon_reader:
     self_contained: TRUE
@@ -21,6 +21,14 @@ class: middle, inverse
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-tile-view, echo=FALSE}
+xaringanExtra::use_tile_view()
+xaringanExtra::use_webcam()
+xaringanExtra::use_tachyons()
+xaringanExtra::use_animate_css()
+xaringanExtra::use_share_again()
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE, eval=FALSE}
@@ -217,7 +225,7 @@ library(DirichletMultinomial) #<<
 set.seed(16) # for consistent DMM results #<<
 
 icu_matrix_et <- read_rds(
-  path = "./data/icu_ET_specimen_otu_table.rds"
+  "./data/icu_ET_specimen_otu_table.rds"
   )
 
 icu_matrix_et[1:16,1:2]

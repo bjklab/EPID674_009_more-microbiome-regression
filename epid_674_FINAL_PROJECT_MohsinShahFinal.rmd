@@ -1,0 +1,241 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+install.packages("tidyverse")
+install.packages("vegan")
+install.packages("ape")
+library(tidyverse)
+library(vegan)
+library(ape)
+
+icu_small_long <- read_csv("final_project_data/icu_small_long.csv.gz")
+
+icu_small_long %>%
+     group_by(specimen_source) %>%
+     summarise(
+         specimen_shannon = diversity(x = read_count,
+                                      index = "shannon",
+                                      base = exp(1))
+     ) %>%
+     ungroup()
+
+icu_small_long %>%
+     group_by(specimen_source) %>%
+            summarise(
+            specimen_shannon = diversity(x = read_count,
+                                       index = "shannon",
+                                       base = exp(1))
+      ) %>%
+      ungroup() -> new_dataset_with_shannon
+
+new_dataset_with_shannon %>%
+  ggplot(data= .) +
+  geom_boxplot(aes(y=specimen_shannon, x=specimen_source))
+
+new_dataset_with_shannon %>%
+  ggplot(data= .) +
+  geom_boxplot(aes(y=specimen_shannon, x=specimen_source, color=specimen_source))
+  
+icu_small_long %>% 
+      group_by(specimen_source) %>%
+      mutate(dummy_variable_site =
+                rnorm(n= length(specimen_source),
+                      mean =nchar(unique(specimen_source)),
+                      sd = 0.5)) %>%
+     ungroup() %>%
+       filter(specimen_source %in%
+                 c("ET","OP")) %>%
+       select(specimen_id, 
+             specimen_source,
+             dummy_variable_site) %>%
+      mutate(specimen_id = as.character(specimen_id)) %>%
+      distinct() -> new_icu_dummy
+
+new_icu_dummy
+
+icu_small_long %>%
+    group_by(specimen_id) %>%
+    summarise(shannon = diversity(x = read_count,
+    index = "shannon")) %>%
+    ungroup() %>%
+    left_join(new_icu_dummy, by = "specimen_id") %>%
+    mutate(dummy_variable_shannon =
+    rnorm(n =length(shannon),
+    mean = 0,
+    sd = 0.2) + 
+    shannon) %>%
+   distinct() -> shannon_summ
+shannon_summ
+
+shannon_summ %>%
+   lm(formula = dummy_variable_site ~ shannon,
+   data = .) %>%
+   summary()
+
+shannon_summ %>%
+  qplot(data =.,
+  x = shannon,
+  y = dummy_variable_site,
+  color = specimen_source,
+  geom = c("point", "smooth"),
+  method = "lm") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+shannon_summ %>%
+  qplot(data = .,
+  x = shannon,
+  y = dummy_variable_shannon,
+  color = specimen_source,
+  geom = c("point", "smooth"),
+  method = "lm") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+ shannon_summ %>%
+   lm(formula = dummy_variable_shannon ~ shannon,
+   data =.) %>%
+   summary()
+
+shannon_summ %>%
+  lm(formula = dummy_variable_shannon ~ shannon +
+         specimen_source,
+ data = .) %>%
+ summary()
+ 
+otu_tab <- read_rds(
+ "./final_project_data/icu_small_mat.rds"
+)
+
+otu_tab %>%
+     t() %>% #TRANSPOSE
+     vegdist(x = ., method = "jaccard") %>%
+     pcoa(D = .) -> pc
+pc$vectors %>%
+     as_tibble(rownames ="specimen_id") %>%
+     select(specimen_id, Axis.1, Axis.2) %>%
+     left_join(shannon_summ, by = "specimen_id") %>%
+     mutate(dummy_variable_pc=
+                rnorm(n = length(shannon),
+                      mean = 0,
+                      sd = 0.2) +
+                Axis.1) %>%
+     distinct() -> pc_summ
+pc_summ
+
+pc_summ %>%
+     qplot(data = .,
+           x = Axis.1,
+           y = dummy_variable_pc,
+           color = specimen_source,
+           geom = c("point", "smooth"),
+           method = "lm") +
+     theme_bw() +
+     theme(legend.position = "bottom")
+
+pc_summ %>%
+ lm(formula = dummy_variable_pc ~ Axis.1,
+ data = .) %>%
+ summary()
+
+otu_tab %>%
+ t() %>% #TRANSPOSE
+ vegdist(x = ., method = "jaccard") -> otu_dist
+ otu_dist %>%
+ str(vec.len =2)
+
+labels(otu_dist) %>% #match order from dist
+enframe(value = "specimen_id") %>%
+select(specimen_id) %>%
+left_join(pc_summ, by = "specimen_id") %>%
+mutate(dummy_category = Axis.1 > mean(Axis.1)) %>%
+distinct() -> sorted_summ
+sorted_summ
+
+sorted_summ %>%
+select(specimen_id, specimen_source) %>%
+distinct() -> adonis_data
+
+adonis_data
+
+adonis(otu_dist ~ specimen_source,
+  data = adonis_data)
+
+library(tidyverse)
+install.packages("viridis")
+library(viridis)
+
+install.packages("BiocManager")
+BiocManager::install("DirichletMultinomial")
+library(DirichletMultinomial)
+
+set.seed(16)
+
+otu_tab <- read_rds(
+ "./final_project_data/icu_small_mat.rds"
+)
+
+otu_tab[1:16,1:2]
+
+otu_tab[rowSums(otu_tab) >500,] -> small_otu_tab
+
+dmm <- lapply(1:6,
+              dmn,
+              count = t(otu_tab),
+              verbose = FALSE)
+              
+lplc <- sapply(dmm, laplace)
+
+qplot(x = seq_along(lplc),
+     y=lplc,
+     geom = c("point", "line")) +
+  theme_bw() +
+  labs(x= "Dirichlet Components",
+      y= "LPLC")
+      
+best_dmm <- dmm[[which.min(lplc)]]
+mixture(best_dmm) %>%
+  as_tibble(rownames = "specimen") %>%
+  rename_at(.vars = vars(contains("V")),
+           .funs = function(x)
+              paste0(
+                gsub("V", "m" ,x), "_prob")
+                ) %>%
+                
+mutate(assignment = 
+        mixture(best_dmm,
+        assign =TRUE)) ->
+        otu_tab_dmm_assignments
+        
+otu_tab_dmm_assignments        
+
+fitted(best_dmm, scale=TRUE) %>%
+   as_tibble(rownames = "otu_id") %>%
+   rename_at(.vars = vars(contains("V")),
+   .funs = function(x)
+   paste0(gsub("V","m",x), "_fit")) ->
+   otu_tab_dmm_otu_fits
+   
+otu_tab_dmm_otu_fits %>%
+   gather(key = which_mix, value = mix_fit, -otu_id) %>%
+   ggplot(data= .) +
+   geom_tile(mapping = aes(x = which_mix,
+             y = otu_id,
+             fill = mix_fit)) +
+   scale_fill_viridis()
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
